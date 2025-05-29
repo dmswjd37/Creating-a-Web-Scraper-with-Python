@@ -4,16 +4,28 @@ from bs4 import BeautifulSoup
 import csv
 
 class Job:
-    def __init__(self):
-        pass
+    def __init__(self, title, company_name, reward, link):
+        self.title = title
+        self.company_name = company_name
+        self.reward = reward
+        self.link = link
+
+    def to_dict(self):
+        return {
+            "title":self.title,
+            "company_name":self.company_name,
+            "reward":self.reward,
+            "link":self.link
+        }
 
 class WantedJob:
     def __init__(self):
-        self.p = sync_playwright().start()
         self.jobs_db = []
 
     def scrape_page(self, keyword):
-        browser = self.p.chromium.launch(headless=False)   # 브라우저 초기화, headless는 기본적으로 True
+        p = sync_playwright().start()
+
+        browser = p.chromium.launch(headless=False)   # 브라우저 초기화, headless는 기본적으로 True
 
         page = browser.new_page()
 
@@ -45,7 +57,7 @@ class WantedJob:
 
         time.sleep(3)
 
-        self.p.stop()
+        p.stop()
 
         soup = BeautifulSoup(content, "html.parser")
 
@@ -55,26 +67,20 @@ class WantedJob:
             link = f"https://www.wanted.co.kr{job.find('a')['href']}"
             title = job.find("strong", class_="JobCard_title___kfvj").text
             company_name = job.find("span", class_="JobCard_companyName__kmtE0").text
-            reward = job.find("span", class_="JobCard_reward__oCSIQ").text
-            job = {
-                "title":title,
-                "company_name":company_name,
-                "reward":reward,
-                "link":link
-            }
-            self.jobs_db.append(job)
+            reward = job.find("span", class_="JobCard_reward__oCSIQ").text if job.find("span", class_="JobCard_reward__oCSIQ") is not None else ""
+            job = Job(title, company_name, reward, link)
+            self.jobs_db.append(job.to_dict())
 
-
-        file = open("jobs.csv", "w")
+        file = open(f"{keyword}.csv", "w")
         writer = csv.writer(file)
         writer.writerow([
             "Title", 
-            "Company", 
+            "Company",      
             "Reward", 
             "Link"
         ])
 
-        for job in jobs_db:
+        for job in self.jobs_db:
             writer.writerow(job.values())
         file.close()
 
