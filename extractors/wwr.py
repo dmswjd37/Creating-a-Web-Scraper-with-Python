@@ -1,4 +1,3 @@
-from requests import get
 from bs4 import BeautifulSoup
 import cloudscraper
 
@@ -6,6 +5,7 @@ def extract_wwr_jobs(keyword):
     scraper = cloudscraper.create_scraper()
     base_url = "https://weworkremotely.com/remote-jobs/search?term="
     response = scraper.get(f"{base_url}{keyword}")
+    print("response.status_code=",response.status_code)
     if response.status_code != 200:
         print("Can't request website")
     else:
@@ -19,14 +19,14 @@ def extract_wwr_jobs(keyword):
                 anchors = post.find_all('a')
                 anchor = anchors[1]
                 link = anchor['href']
-                company, kind, region = anchor.find_all('span',
-                                                        class_="company")
-                title = anchor.find('span', class_='title')
+                company = post.find("p", class_="new-listing__company-name").text
+                region = post.find("p", class_="new-listing__company-headquarters").text
+                title = post.find('h4', class_='new-listing__header__title').text
                 job_data = {
                     'link': f"https://weworkremotely.com{link}",
-                    'company': company.string.replace(",", " "),
-                    'location': region.string.replace(",", " "),
-                    'position': title.string.replace(",", " ")
+                    'company': company.replace(",", " "),
+                    'location': region.replace(",", " "),
+                    'position': title.replace(",", " ")
                 }
                 results.append(job_data)
         return results

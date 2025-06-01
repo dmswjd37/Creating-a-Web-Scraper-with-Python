@@ -1,32 +1,24 @@
 from requests import get
 from bs4 import BeautifulSoup
-import cloudscraper
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 
-def get_html_with_selenium(url):
-    options = Options()
-    options.add_argument("--headless")  # 브라우저를 띄우지 않음
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-
-    driver = webdriver.Chrome(options=options)
-    driver.get(url)
-    html = driver.page_source
-    driver.quit()
-    return html
 
 def get_page_count(keyword):
-    base_url = f"https://kr.indeed.com/jobs?q={keyword}"
-    html = get_html_with_selenium(base_url)
-    #response = scraper.get(f"{base_url}{keyword}")
-    soup = BeautifulSoup(html, "html.parser")
-    pagination = soup.find("ul", class_="pagination-list")
-    if pagination is None:
-        return 1
-    pages = pagination.find_all("li", recursive=False)
-    count = len(pages)
-    return min(count, 5)
+    base_url = "https://kr.indeed.com/jobs?q="
+    response = get(f"{base_url}{keyword}")
+    if response.status_code != 200:
+        print("Cant request page")
+    else:
+        soup = BeautifulSoup(response.text, "html.parser")
+        pagination = soup.find("ul", class_="pagination-list")
+        if pagination == None:
+            return 1
+        pages = pagination.find_all("li", recursive=False)
+        count = len(pages)
+        if count >= 5:
+            return 5
+        else:
+            return count
+
 
 def extract_indeed_jobs(keyword):
     pages = get_page_count(keyword)

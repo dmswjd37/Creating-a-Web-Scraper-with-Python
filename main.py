@@ -11,9 +11,10 @@ def home():
 @app.route("/search")
 def search():
     keyword = request.args.get("keyword")
-    indeed = extract_indeed_jobs(keyword)
+    # indeed = extract_indeed_jobs(keyword)
     wwr = extract_wwr_jobs(keyword)
-    jobs = indeed + wwr
+    # jobs = indeed + wwr
+    jobs = wwr
     return render_template("search.html", keyword=keyword, jobs=jobs)
 
-app.run("127.0.0.1", port=8000, debug=True)
+app.run("127.0.0.1", port=5002, debug=True)
